@@ -16,7 +16,7 @@ services:
   hesk:
     depends_on:
       - db
-    image: ghcr.io/luketainton/hesk:latest
+    image: ghcr.io/kimmknight/hesk:latest
     ports:
       - "80:80"
     restart: always
