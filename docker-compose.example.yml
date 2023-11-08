@@ -13,7 +13,7 @@ services:
       # Please change the password before deploying.
       MARIADB_PASSWORD: hesk
     
-  wordpress:
+  hesk:
     depends_on:
       - db
     image: ghcr.io/luketainton/hesk:latest
