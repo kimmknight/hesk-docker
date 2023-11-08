@@ -38,6 +38,11 @@ function hesk_newTicket($ticket)
         $language = "'" . hesk_dbEscape($hesklang['LANGUAGE']) . "'";
     }
 
+    $ticket['status'] = isset($ticket['status']) ? intval($ticket['status']) : 0;
+    if ($ticket['status'] < 0) {
+        $ticket['status'] = 0;
+    }
+
 	// Prepare SQL for custom fields
 	$custom_where = '';
 	$custom_what  = '';
@@ -61,13 +66,22 @@ function hesk_newTicket($ticket)
     }
 
     if (isset($ticket['due_date']) && $ticket['due_date'] != '') {
-        $date = new DateTime($ticket['due_date'] . 'T00:00:00');
-        $formatted_date = $date->format('Y-m-d');
-        $due_date = "'" . hesk_dbEscape($formatted_date) . "'";
+        $date = hesk_datepicker_get_date($ticket['due_date']);
+        if ($date === false) {
+            $due_date = 'NULL';
+            $ticket['due_date'] = '';
+        } else {
+            $formatted_date = $date->format('Y-m-d');
+            $due_date = "'" . hesk_dbEscape($formatted_date) . "'";
+        }
     } else {
         $due_date = 'NULL';
         $ticket['due_date'] = '';
     }
+
+    $locked = isset($ticket['locked']) ? 1 : 0;
+    $closedat = isset($ticket['closedat']) ? 'NOW()' : 'NULL';
+    $closedby = isset($ticket['closedby']) ? intval($ticket['closedby']) : 'NULL';
 
 	// Insert ticket into database
 	hesk_dbQuery("
@@ -83,11 +97,15 @@ function hesk_newTicket($ticket)
 		`message_html`,
 		`dt`,
 		`lastchange`,
+        `closedat`,
 		`articles`,
 		`ip`,
 		`language`,
+        `status`,
 		`openedby`,
+        `closedby`,
 		`owner`,
+        `locked`,
 		`attachments`,
 		`merged`,
 		`history`,
@@ -107,11 +125,15 @@ function hesk_newTicket($ticket)
 		'".hesk_dbEscape($ticket['message_html'])."',
 		NOW(),
 		NOW(),
+        {$closedat},
 		".( isset($ticket['articles']) ? "'{$ticket['articles']}'" : 'NULL' ).",
 		'".hesk_dbEscape(hesk_getClientIP())."',
 		$language,
+        '{$ticket['status']}',
 		'".( isset($ticket['openedby']) ? intval($ticket['openedby']) : 0 )."',
+        {$closedby},
 		'".intval($ticket['owner'])."',
+        '$locked',
 		'".hesk_dbEscape($ticket['attachments'])."',
 		'',
 		'".hesk_dbEscape($ticket['history'])."',
@@ -128,11 +150,12 @@ function hesk_newTicket($ticket)
 	'priority'		=> $ticket['priority'],
 	'owner'			=> $ticket['owner'],
 	'trackid'		=> $ticket['trackid'],
-	'status'		=> 0,
+	'status'		=> $ticket['status'],
 	'name'			=> $ticket['name'],
 	'last_reply_by'	=> $ticket['name'],
 	'subject'		=> $ticket['subject'],
 	'message'		=> $ticket['message'],
+    'message_html'  => stripslashes($ticket['message_html']),
 	'attachments'	=> $ticket['attachments'],
 	'dt'			=> hesk_date(),
 	'lastchange'	=> hesk_date(),
@@ -165,8 +188,7 @@ function hesk_cleanFileName($filename)
 
     if ( ! isset($parts['extension']))
     {
-        global $hesklang;
-        die($hesklang['eto']);
+        $parts['extension'] = 'unknown-file-type';
     }
     $parts['extension'] = preg_replace('/[^A-Za-z0-9\-_]/', '', $parts['extension']);
 

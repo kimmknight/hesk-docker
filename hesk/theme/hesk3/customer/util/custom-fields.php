@@ -38,7 +38,7 @@ function hesk3_output_custom_fields($customFields) {
                 ?>
                 <section class="param blue-select">
                     <span class="label <?php echo $customField['req'] ? 'required' : '' ?>"><?php echo $customField['name:']; ?></span>
-                        <select name="<?php echo $customField['name']; ?>" id="<?php echo $customField['name']; ?>">
+                        <select name="<?php echo $customField['name']; ?>" id="<?php echo $customField['name']; ?>" class="<?php echo $customField['iserror'] ? 'isError' : '' ?>">
                             <?php if (!empty($customField['value']['show_select'])): ?>
                             <option value=""><?php echo $hesklang['select']; ?></option>
                             <?php
@@ -56,7 +56,7 @@ function hesk3_output_custom_fields($customFields) {
                 break;
             case 'checkbox':
                 ?>
-                <section class="param checkboxs">
+                <section class="param checkboxs <?php echo $customField['iserror'] ? 'isError' : '' ?>">
                     <label class="label <?php echo $customField['req'] ? 'required' : '' ?>"><?php echo $customField['name:']; ?></label>
                     <?php
                     $i = 0;
@@ -89,10 +89,13 @@ function hesk3_output_custom_fields($customFields) {
             <?php
                 break;
             case 'date':
+                if (is_string($customField['original_value']) && ($dd = hesk_datepicker_get_date($customField['original_value']))) {
+                    $hesk_settings['datepicker']['#'.$customField['name']]['timestamp'] = $dd->getTimestamp();
+                }
                 ?>
                 <!--[if !IE]><!-->
                 <section class="param calendar">
-                    <label class="label <?php echo $customField['req'] ? 'required' : '' ?>"><?php echo $customField['name:']; ?></label>
+                    <label class="label <?php echo $customField['req'] ? 'required' : '' ?> <?php if ($customField['iserror']) echo 'isErrorStr'; ?>"><?php echo $customField['name:']; ?></label>
                     <div class="calendar--button">
                         <button type="button">
                             <svg class="icon icon-calendar">
@@ -100,12 +103,13 @@ function hesk3_output_custom_fields($customFields) {
                             </svg>
                         </button>
                         <input name="<?php echo $customField['name']; ?>"
+                               id="<?php echo $customField['name']; ?>"
                                value="<?php echo $customField['original_value']; ?>"
                                type="text"
                                class="datepicker">
                     </div>
                     <div class="calendar--value" <?php if ($customField['original_value']) { ?>style="display: block"<?php } ?>>
-                        <span><?php echo $customField['original_value']; ?></span>
+                        <span <?php if ($customField['iserror'] && ! empty($customField['original_value'])) echo 'class="isErrorStr"'; ?>><?php echo $customField['original_value']; ?></span>
                         <i class="close">
                             <svg class="icon icon-close">
                                 <use xlink:href="<?php echo TEMPLATE_PATH; ?>customer/img/sprite.svg#icon-close"></use>

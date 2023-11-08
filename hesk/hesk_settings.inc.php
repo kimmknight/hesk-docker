@@ -1,5 +1,5 @@
 <?php
-// Settings file for HESK 3.2.5
+// Settings file for HESK 3.4.3
 
 // ==> GENERAL
 
@@ -9,8 +9,6 @@ $hesk_settings['site_url']='http://www.example.com';
 $hesk_settings['hesk_title']='Help Desk';
 $hesk_settings['hesk_url']='http://www.example.com/helpdesk';
 $hesk_settings['webmaster_mail']='support@example.com';
-$hesk_settings['noreply_mail']='support@example.com';
-$hesk_settings['noreply_name']='Help Desk';
 $hesk_settings['site_theme']='hesk3';
 $hesk_settings['admin_css']=0;
 $hesk_settings['admin_css_url']='https://www.example.com/hesk-style.css';
@@ -61,7 +59,7 @@ $hesk_settings['sequential']=1;
 $hesk_settings['time_worked']=1;
 $hesk_settings['spam_notice']=1;
 $hesk_settings['list_users']=0;
-$hesk_settings['debug_mode']=0;
+$hesk_settings['debug_mode']=1;
 $hesk_settings['short_link']=0;
 $hesk_settings['select_cat']=0;
 $hesk_settings['select_pri']=0;
@@ -88,6 +86,8 @@ $hesk_settings['x_frame_opt']=1;
 $hesk_settings['samesite']='Lax';
 $hesk_settings['force_ssl']=0;
 $hesk_settings['url_key']='';
+$hesk_settings['require_mfa']=0;
+$hesk_settings['elevator_duration']='60M';
 
 // --> Attachments
 $hesk_settings['attachments']=array (
@@ -122,27 +122,22 @@ $hesk_settings['kb_related']=5;
 // ==> EMAIL
 
 // --> Email sending
+$hesk_settings['noreply_mail']='support@example.com';
+$hesk_settings['noreply_name']='Help Desk';
+$hesk_settings['email_formatting']=3;
 $hesk_settings['smtp']=0;
 $hesk_settings['smtp_host_name']='mail.example.com';
-$hesk_settings['smtp_host_port']=25;
+$hesk_settings['smtp_host_port']=587;
 $hesk_settings['smtp_timeout']=20;
-$hesk_settings['smtp_ssl']=0;
-$hesk_settings['smtp_tls']=0;
+$hesk_settings['smtp_enc']='tls';
+$hesk_settings['smtp_noval_cert']=0;
 $hesk_settings['smtp_user']='';
 $hesk_settings['smtp_password']='';
+$hesk_settings['smtp_conn_type']='basic';
+$hesk_settings['smtp_oauth_provider']=0;
 
 // --> Email piping
 $hesk_settings['email_piping']=0;
-
-// --> POP3 Fetching
-$hesk_settings['pop3']=0;
-$hesk_settings['pop3_job_wait']=15;
-$hesk_settings['pop3_host_name']='mail.example.com';
-$hesk_settings['pop3_host_port']=110;
-$hesk_settings['pop3_tls']=0;
-$hesk_settings['pop3_keep']=0;
-$hesk_settings['pop3_user']='';
-$hesk_settings['pop3_password']='';
 
 // --> IMAP Fetching
 $hesk_settings['imap']=0;
@@ -154,8 +149,29 @@ $hesk_settings['imap_noval_cert']=0;
 $hesk_settings['imap_keep']=0;
 $hesk_settings['imap_user']='';
 $hesk_settings['imap_password']='';
+$hesk_settings['imap_conn_type']='basic';
+$hesk_settings['imap_oauth_provider']=0;
 
-// --> Email loops
+// --> POP3 Fetching
+$hesk_settings['pop3']=0;
+$hesk_settings['pop3_job_wait']=15;
+$hesk_settings['pop3_host_name']='mail.example.com';
+$hesk_settings['pop3_host_port']=110;
+$hesk_settings['pop3_tls']=0;
+$hesk_settings['pop3_keep']=0;
+$hesk_settings['pop3_user']='';
+$hesk_settings['pop3_password']='';
+$hesk_settings['pop3_conn_type']='basic';
+$hesk_settings['pop3_oauth_provider']=0;
+
+$hesk_settings['strip_quoted']=1;
+$hesk_settings['eml_req_msg']=0;
+$hesk_settings['save_embedded']=1;
+
+// --> Ignore emails
+$hesk_settings['pipe_block_noreply']=1;
+$hesk_settings['pipe_block_returned']=1;
+$hesk_settings['pipe_block_duplicate']=1;
 $hesk_settings['loop_hits']=5;
 $hesk_settings['loop_time']=300;
 
@@ -170,9 +186,6 @@ $hesk_settings['notify_spam_tags']=array('Spam?}','***SPAM***','[SPAM]','SPAM-LO
 $hesk_settings['notify_closed']=1;
 
 // --> Other
-$hesk_settings['strip_quoted']=1;
-$hesk_settings['eml_req_msg']=0;
-$hesk_settings['save_embedded']=1;
 $hesk_settings['multi_eml']=0;
 $hesk_settings['confirm_email']=0;
 $hesk_settings['open_only']=1;
@@ -185,14 +198,20 @@ $hesk_settings['ticket_list']=array('trackid','lastchange','name','subject','sta
 // --> Other
 $hesk_settings['submittedformat']=2;
 $hesk_settings['updatedformat']=2;
+$hesk_settings['format_submitted']='Y-m-d g:i a';
+$hesk_settings['format_updated']='Y-m-d g:i a';
 
 
 // ==> MISC
 
 // --> Date & Time
 $hesk_settings['timezone']='UTC';
-$hesk_settings['timeformat']='Y-m-d H:i:s';
+$hesk_settings['format_time']='H:i:s';
+$hesk_settings['format_date']='Y-m-d';
+$hesk_settings['format_timestamp']='Y-m-d H:i:s';
 $hesk_settings['time_display']='1';
+$hesk_settings['format_datepicker_js']='dd/mm/yyyy';
+$hesk_settings['format_datepicker_php']='d/m/Y';
 
 // --> Other
 $hesk_settings['ip_whois']='https://whois.domaintools.com/{IP}';
@@ -207,7 +226,7 @@ $hesk_settings['check_updates']=1;
 #############################
 #     DO NOT EDIT BELOW     #
 #############################
-$hesk_settings['hesk_version']='3.2.5';
+$hesk_settings['hesk_version']='3.4.3';
 if ($hesk_settings['debug_mode'])
 {
     error_reporting(E_ALL);

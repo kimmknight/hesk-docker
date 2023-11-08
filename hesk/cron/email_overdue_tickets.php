@@ -94,6 +94,7 @@ while ($ticket = hesk_dbFetchAssoc($rs)) {
     $ticket['dt'] = hesk_date($ticket['dt'], true);
     $ticket['lastchange'] = hesk_date($ticket['lastchange'], true);
     $ticket['last_reply_by'] = hesk_getReplierName($ticket);
+    $ticket['due_date_sql'] = $ticket['due_date'];
     $ticket['due_date'] = hesk_format_due_date($ticket['due_date']);
     $ticket = hesk_ticketToPlain($ticket, 1, 0);
 
@@ -103,7 +104,7 @@ while ($ticket = hesk_dbFetchAssoc($rs)) {
             hesk_overdue_ticket_log("[{$hesklang['success']}]\n{$hesklang['trackID']}: {$ticket['trackid']}\n{$hesklang['email']}: {$owner_email}");
         } elseif (hesk_sendOverdueTicketReminder($ticket, $users)) {
             $tickets_to_flag[] = $ticket['id'];
-            $tickets_log_sql[] = "('".intval($ticket['id'])."', '".intval($ticket['category'])."', '".intval($ticket['priority'])."', '".intval($ticket['status'])."', '".intval($ticket['owner'])."', '".hesk_dbEscape($ticket['due_date'])."')";
+            $tickets_log_sql[] = "('".intval($ticket['id'])."', '".intval($ticket['category'])."', '".intval($ticket['priority'])."', '".intval($ticket['status'])."', '".intval($ticket['owner'])."', '".hesk_dbEscape($ticket['due_date_sql'])."')";
             $successful_emails++;
 
             hesk_overdue_ticket_log("[{$hesklang['success']}]\n{$hesklang['trackID']}: {$ticket['trackid']}\n{$hesklang['email']}: {$owner_email}");
@@ -111,7 +112,7 @@ while ($ticket = hesk_dbFetchAssoc($rs)) {
             // Let's force flag/insert into log every 1000 tickets to make sure we don't hit the max_allowed_packet limit, and to free some memory
             if ($successful_emails % 1000 == 0) {
                 hesk_dbQuery("INSERT INTO `".hesk_dbEscape($hesk_settings['db_pfix'])."log_overdue` (`ticket`, `category`, `priority`, `status`, `owner`, `due_date`) VALUES " . implode(',', $tickets_log_sql));
-                hesk_dbQuery("UPDATE `" . hesk_dbEscape($hesk_settings['db_pfix']) . "tickets` SET `overdue_email_sent` = '1' WHERE `id` IN (" . implode(',', $tickets_to_flag) . ")");
+                hesk_dbQuery("UPDATE `" . hesk_dbEscape($hesk_settings['db_pfix']) . "tickets` SET `overdue_email_sent` = '1', `history`=CONCAT(`history`,'" . hesk_dbEscape(sprintf($hesklang['thist21'], hesk_date())) . "') WHERE `id` IN (" . implode(',', $tickets_to_flag) . ")");
                 $tickets_to_flag = array();
                 $tickets_log_sql = array();
             }
@@ -128,7 +129,7 @@ while ($ticket = hesk_dbFetchAssoc($rs)) {
 // Flag/insert any remaning tickets
 if (count($tickets_to_flag) > 0 && !$hesk_settings['simulate_overdue_tickets']) {
     hesk_dbQuery("INSERT INTO `".hesk_dbEscape($hesk_settings['db_pfix'])."log_overdue` (`ticket`, `category`, `priority`, `status`, `owner`, `due_date`) VALUES " . implode(',', $tickets_log_sql));
-    hesk_dbQuery("UPDATE `" . hesk_dbEscape($hesk_settings['db_pfix']) . "tickets` SET `overdue_email_sent` = '1' WHERE `id` IN (" . implode(',', $tickets_to_flag) . ")");
+    hesk_dbQuery("UPDATE `" . hesk_dbEscape($hesk_settings['db_pfix']) . "tickets` SET `overdue_email_sent` = '1', `history`=CONCAT(`history`,'" . hesk_dbEscape(sprintf($hesklang['thist21'], hesk_date())) . "') WHERE `id` IN (" . implode(',', $tickets_to_flag) . ")");
 }
 
 hesk_overdue_ticket_log(sprintf($hesklang['overdue_finished'], $successful_emails, $failed_emails));

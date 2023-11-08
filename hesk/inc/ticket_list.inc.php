@@ -162,6 +162,11 @@ if (true)
 		$query .= '&amp;s_ot='.$s_ot[1];
 		$query .= '&amp;s_un='.$s_un[1];
 
+        $query .= '&amp;duedate_option='.$duedate_search_type;
+        $query .= '&amp;duedate_specific_date='.$duedate_input;
+        $query .= '&amp;duedate_amount_value='.$duedate_amount_value;
+        $query .= '&amp;duedate_amount_unit'.$duedate_amount_unit;
+
 		$query .= '&amp;cot='.$cot;
 		$query .= '&amp;g='.$group;
 	}
@@ -225,6 +230,11 @@ if (true)
 		$query .= '&amp;s_un='.$s_un[1];
 		$query .= '&amp;page=1';
 		#$query .= '&amp;sort=';
+
+        $query .= '&amp;duedate_option='.$duedate_search_type;
+        $query .= '&amp;duedate_specific_date='.$duedate_input;
+        $query .= '&amp;duedate_amount_value='.$duedate_amount_value;
+        $query .= '&amp;duedate_amount_unit'.$duedate_amount_unit;
 
 		$query .= '&amp;cot='.$cot;
 		$query .= '&amp;g='.$group;
@@ -410,11 +420,17 @@ if (true)
 			switch ($hesk_settings['submittedformat'])
 			{
 	        	case 1:
-					$ticket['dt'] = hesk_formatDate($ticket['dt']);
+					$ticket['dt'] = hesk_date($ticket['dt'], true, true, true, $hesk_settings['format_timestamp']);
 					break;
 				case 2:
 					$ticket['dt'] = hesk_time_lastchange($ticket['dt']);
 					break;
+                case 3:
+                    $ticket['dt'] = hesk_date($ticket['dt'], true, true, true, $hesk_settings['format_date']);
+                    break;
+                case 4:
+                    $ticket['dt'] = hesk_date($ticket['dt'], true, true, true, $hesk_settings['format_submitted']);
+                    break;
 				default:
 					$ticket['dt'] = hesk_time_since( strtotime($ticket['dt']) );
 			}
@@ -427,11 +443,17 @@ if (true)
 			switch ($hesk_settings['updatedformat'])
 			{
 	        	case 1:
-					$ticket['lastchange'] = hesk_formatDate($ticket['lastchange']);
+					$ticket['lastchange'] = hesk_date($ticket['lastchange'], true, true, true, $hesk_settings['format_timestamp']);
 					break;
 				case 2:
 					$ticket['lastchange'] = hesk_time_lastchange($ticket['lastchange']);
 					break;
+                case 3:
+                    $ticket['lastchange'] = hesk_date($ticket['lastchange'], true, true, true, $hesk_settings['format_date']);
+                    break;
+                case 4:
+                    $ticket['lastchange'] = hesk_date($ticket['lastchange'], true, true, true, $hesk_settings['format_updated']);
+                    break;
 				default:
 					$ticket['lastchange'] = hesk_time_since( strtotime($ticket['lastchange']) );
 			}
@@ -454,7 +476,7 @@ if (true)
 		// Print customer email
 		if ( hesk_show_column('email') )
 		{
-			echo '<td><a href="mailto:'.$ticket['email'].'">'.$hesklang['clickemail'].'</a></td>';
+			echo '<td>' . (strlen($ticket['email']) ? '<a href="mailto:'.$ticket['email'].'">'.$hesklang['clickemail'].'</a>' : '') . '</td>';
 		}
 
 		// Print subject and link to the ticket page
@@ -519,11 +541,10 @@ if (true)
 
 		// Print due date
         if (hesk_show_column('due_date')) {
-            $dateformat = substr($hesk_settings['timeformat'], 0, strpos($hesk_settings['timeformat'], ' '));
             $due_date = $hesklang['none'];
             if ($ticket['due_date'] != null) {
                 $due_date = hesk_date($ticket['due_date'], false, true, false);
-                $due_date = date($dateformat, $due_date);
+                $due_date = date($hesk_settings['format_date'], $due_date);
             }
 
             echo '<td>'.$due_date.'</td>';
@@ -688,7 +709,7 @@ if (true)
                     <option value="high"><?php echo $hesklang['set_pri_to'].' '.$hesklang['high']; ?></option>
                     <option value="critical"><?php echo $hesklang['set_pri_to'].' '.$hesklang['critical']; ?></option>
                     <?php
-                    if ( hesk_checkPermission('can_resolve', 0) )
+                    if ( hesk_checkPermission('can_resolve', 0) && ! defined('HESK_DEMO') )
                     {
                         ?>
                         <option value="close"><?php echo $hesklang['close_selected']; ?></option>
@@ -776,6 +797,22 @@ if (true)
 	</form>
 	<?php
     } // END ticket list if total > 0
+    elseif (!isset($is_search) && $href != 'find_tickets.php' && !$is_quick_link)
+    {
+        // No tickets in the DB? Show a welcome message
+        $res = hesk_dbQuery("SELECT COUNT(*) FROM `".hesk_dbEscape($hesk_settings['db_pfix'])."tickets`");
+        $num = hesk_dbResult($res,0,0);
+        if ($num == 0)
+        {
+            hesk_show_notice(
+                $hesklang['welcome1'] . '<br><br>' .
+                sprintf(
+                    $hesklang['welcome2'],
+                    '<a href="https://www.hesk.com/knowledgebase/?article=109" target="_blank">' . $hesklang['welcome3'] . '</a>'
+                ), ' ', false
+            );
+        }
+    }
 } // END ticket list if total > 0 or if this is a quick link
 else
 {
@@ -898,10 +935,10 @@ function hesk_time_lastchange($original)
 	global $hesk_settings, $hesklang;
 
 	// Save time format setting so we can restore it later
-	$copy = $hesk_settings['timeformat'];
+	$copy = $hesk_settings['format_timestamp'];
 
 	// We need this time format for this function
-	$hesk_settings['timeformat'] = 'Y-m-d H:i:s';
+	$hesk_settings['format_timestamp'] = 'Y-m-d H:i:s';
 
 	// Get HESK time-adjusted start of today if not already
 	if ( ! defined('HESK_TIME_TODAY') )
@@ -932,7 +969,7 @@ function hesk_time_lastchange($original)
 	}
 
 	// Restore original time format setting
-	$hesk_settings['timeformat'] = $copy;
+	$hesk_settings['format_timestamp'] = $copy;
 
 	// Return value to display
 	return $day;

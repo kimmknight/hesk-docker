@@ -55,23 +55,28 @@ function parser($eml_file='')
 
 	// get a unique temporary file name
 	$tmpfilepath = tempnam($tempdir, strval(mt_rand(1000,9999)));
+    if( ! file_exists($tmpfilepath))
+    {
+        die('Cannot create temporary file: '.$tmpfilepath);
+    }
 
     if (defined('HESK_IMAP'))
     {
         global $imap, $email_number;
-        @file_put_contents($tmpfilepath, imap_fetchbody($imap, $email_number, ""));
+        $is_saved = $imap->saveMessageToFile($email_number, $tmpfilepath);
     }
     else
     {
         // read the mail that is forwarded to the script
         // then save the mail to a temporary file
-        save_forward_mail($tmpfilepath, $eml_file);
+        $is_saved = save_forward_mail($tmpfilepath, $eml_file);
     }
 
-	if(file_exists($tmpfilepath) === FALSE)
-	{
-		die('Failed to save the mail as '.$tmpfilepath.'.');
-	}
+    if ($is_saved === false)
+    {
+        deleteAll($tempdir);
+        return false;
+    }
 
 	$ret = analyze($tmpfilepath,$tempdir);
     //die (print_r($ret));
@@ -98,11 +103,12 @@ function analyze($tmpfilepath,$tempdir)
 	{
 		if($mime->decode_bodies)
 		{
+            # print_r($decoded);
 			if($mime->Analyze($decoded[0], $results))
             {
-            	#echo "MIME:\n\n";
-            	#print_r($results);
-                #echo "\nEND MIME\n\n";
+                # echo "MIME:\n\n";
+                # print_r($results);
+                # echo "\nEND MIME\n\n";
 				return process_results($results,$tempdir) ;
 			}
             else
@@ -289,7 +295,7 @@ function process_results($result,$tempdir)
 	// Convert to UTF-8 before processing further
 	if ($r["encoding"] != "" && $r["encoding"] != 'UTF-8')
 	{
-		$result["Data"] = $result["Data"] == "" ? "" : (function_exists('iconv') ? iconv($r["encoding"], 'UTF-8', $result["Data"]) : utf8_encode($result["Data"]));
+		$result["Data"] = $result["Data"] == "" ? "" : (function_exists('iconv') ? iconv($r["encoding"], 'UTF-8', $result["Data"]) : hesk_iso8859_1_to_utf8($result["Data"]));
 		$r["encoding"] = 'UTF-8';
 	}
 
@@ -364,6 +370,9 @@ function process_results($result,$tempdir)
 	// Name of the temporary folder
 	$r["tempdir"] = $tempdir;
 
+    // Custom Hesk tag with tracking ID
+    $r["X-Hesk-Tracking_ID"] = isset($result["X-Hesk-Tracking_ID"]) ? strtoupper($result["X-Hesk-Tracking_ID"]) : "";
+
 	return $r;
 }
 
@@ -385,6 +394,7 @@ function save_forward_mail($tmpfilepath, $eml_file)
     fwrite($tmpfp, $fileContent);
 
 	fclose($tmpfp);
+    return true;
 }
 
 

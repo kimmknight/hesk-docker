@@ -493,7 +493,7 @@ $(document).ready(function() {
         .find('.datepicker')
         .data("datepicker")
         .clear();
-    $(".ticket-create .param.calendar .calendar--value").fadeOut(
+    $(this).parent().parent().find('.calendar--value').fadeOut(
       150,
       function() {
         $(this)

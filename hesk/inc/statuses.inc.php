@@ -236,11 +236,13 @@ function hesk_print_status_select_box_jquery()
     <script>
     $(document).ready(function() {
         <?php
+        $data_options = array();
         foreach ($hesk_settings['statuses'] as $id => $data)
         {
             // Is this a default status? Use style class to add color
             if (isset($data['class']))
             {
+                $data_options[$id] = array('class' => $data['class']);
                 echo '$("#ticket-status-div > div.dropdown-select > ul.dropdown-list > li[data-option=\''.$id.'\']").addClass("'.$data['class'].'");'."\n";
                 echo '
                     $("#ticket-status-div > div.dropdown-select > div.label > span").filter(function () {
@@ -253,6 +255,7 @@ function hesk_print_status_select_box_jquery()
             // Does this status have a color code?
             if (isset($data['color']))
             {
+                $data_options[$id] = array('color' => $data['color']);
                 echo '$("#ticket-status-div > div.dropdown-select > ul.dropdown-list > li[data-option=\''.$id.'\']").css("color", "'.$data['color'].'");'."\n";
                 echo '
                     $("#ticket-status-div > div.dropdown-select > div.label > span").filter(function () {
@@ -263,6 +266,23 @@ function hesk_print_status_select_box_jquery()
         }
         ?>
     });
+
+    function hesk_update_status_color(this_id)
+    {
+        $("#ticket-status-div > div.dropdown-select > div.label > span").removeClass();
+        $("#ticket-status-div > div.dropdown-select > div.label > span").removeAttr('style');
+        <?php
+        foreach($data_options as $id => $data) {
+            echo 'if (this_id == '.$id.') {';
+            if (isset($data['class'])) {
+                echo '$("#ticket-status-div > div.dropdown-select > div.label > span").addClass("'.$data['class'].'");';
+            } else {
+                echo '$("#ticket-status-div > div.dropdown-select > div.label > span").css("color", "'.$data['color'].'");';
+            }
+            echo 'return;}';
+        }
+        ?>
+    }
     </script>
     <?php
 } // END hesk_print_status_select_box_jquery()
