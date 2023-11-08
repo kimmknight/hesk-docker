@@ -6,7 +6,7 @@ HESK version: 3.4.3 from 8th April 2023
 
 ## Deployment
 
-To deploy HESK and MariaDB, use the following Dockerfile:
+To deploy HESK and MariaDB, use the following Docker Compose YAML:
 
 ```
 ---
@@ -69,4 +69,5 @@ This is a fork of https://github.com/luketainton/hesk-docker
 I have updated HESK and simplified the repo.
 
 ##
-### Support HESK by [buying a licence](https://www.hesk.com/buy.php).
+
+**Support HESK by [buying a licence](https://www.hesk.com/buy.php).**
