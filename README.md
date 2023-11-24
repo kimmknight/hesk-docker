@@ -4,6 +4,8 @@ HESK help desk, but in a Docker container.
 
 HESK version: 3.4.3 from 8th April 2023
 
+PHP/Apache version: Latest as of 2023-11-24
+
 ## Deployment
 
 To deploy HESK and MariaDB, use the following Docker Compose YAML:
