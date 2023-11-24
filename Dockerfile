@@ -1,4 +1,4 @@
-FROM php:apache:latest
+FROM php:apache
 LABEL maintainer="Kim Knight <kim@kimknight.net>"
 LABEL org.opencontainers.image.source="https://github.com/kimmknight/hesk-docker"
 COPY --chown=www-data:www-data hesk /srv
